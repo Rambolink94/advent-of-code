@@ -31,34 +31,21 @@ pub fn part_1(input_handler: &InputHandler, mode: Mode) {
 }
 
 pub fn part_2(input_handler: &InputHandler, mode: Mode) {
-    let numbers = HashMap::from([
-        ("one", '1'),
-        ("two", '2'),
-        ("three", '3'),
-        ("four", '4'),
-        ("five", '5'),
-        ("six", '6'),
-        ("seven", '7'), 
-        ("eight", '8'),
-        ("nine", '9'),
-    ]);
-
     let lines = input_handler.parse_lines("./src/year_2023/day_1/input.txt", mode);
     
     let mut total = 0;
     for line in lines {
         if let Ok(line) = line {
+            let indexes = contains_numbers(&line);
+            println!("{:?}", indexes);
+
             let mut min_max = [0, 0];
             let mut min_set = false;
 
             let mut index = 0;
-            let mut word_start: Option<usize> = None;
             for char in line.chars() {
-                let indexes = contains_numbers(&line);
-                println!("{:?}", indexes);
-                print!("{char}");
                 if char.is_ascii_digit() {
-                    println!("\nFound number: {char}");
+                    println!("Found number: {char}");
                     if !min_set {
                         min_max[0] = index;
                         min_set = true;
@@ -66,57 +53,32 @@ pub fn part_2(input_handler: &InputHandler, mode: Mode) {
                     else {
                         min_max[1] = index;
                     }
-
-                    word_start = None;
-                }
-                else {
-                    if word_start.is_none() {
-                        word_start = Some(index);
-                    }
-                    
-                    let mut reset = false;
-                    if let Some(word_start) = word_start {
-                        let word = &line[word_start..index + 1];
-                        if numbers.contains_key(word) {
-                            println!("\nFound word: {word}");
-                            if !min_set {
-                                min_max[0] = word_start;
-                                min_set = true;
-                            }
-                            else {
-                                min_max[1] = word_start;
-                            }
-
-                            reset = true;
-                        }
-                    }
-
-                    if reset {
-                        word_start = None;
-                    }
                 }
 
                 index += 1;
             }
             
-            println!("{:?}", min_max);
-            let mut calibration_value = String::new();
-            for i in min_max.iter() {
-                let current = line.chars().nth(*i).unwrap();
-                if current.is_ascii_digit() {
-                    calibration_value.push(current);
-                } else {
-                    for j in *i..line.len() {
-                        let word = &line[*i..j + 1];
-                        if numbers.contains_key(word) {
-                            println!("Pushing {word}..");
-                            calibration_value.push(numbers[word]);
-                        }
-                    }
-                }
+            if min_max[0] > min_max[1] {
+                min_max[1] = min_max[0];
             }
 
-            println!("{} - {}", line, calibration_value);
+            let mut calibration_value = String::new();
+            let length = indexes.len();
+            let mut val = line.chars().nth(min_max[0]).unwrap();
+            if length > 0 && indexes[0].0 <= min_max[0] {
+                val = indexes[0].1;
+            }
+
+            calibration_value.push(val);
+
+            val = line.chars().nth(min_max[1]).unwrap();
+            if length > 0 && indexes[length - 1].0 > min_max[1] {
+                val = indexes[length - 1].1;
+            }
+
+            calibration_value.push(val);
+
+            println!("{} - {}\n", line, calibration_value);
             let value = calibration_value.parse::<i32>().unwrap();
             total += value;
         }
@@ -125,7 +87,7 @@ pub fn part_2(input_handler: &InputHandler, mode: Mode) {
     println!("\nTotal: {total}");
 }
 
-fn contains_numbers(word: &String) -> Vec<(usize, char)> {
+fn contains_numbers(line: &String) -> Vec<(usize, char)> {
     let numbers = HashMap::from([
         ("one", '1'),
         ("two", '2'),
@@ -137,10 +99,15 @@ fn contains_numbers(word: &String) -> Vec<(usize, char)> {
         ("eight", '8'),
         ("nine", '9'),
     ]);
-
+    
     let mut indexes = Vec::new();
     for (key, value) in numbers {
-        let index = word.find(key);
+        let index = line.find(key);
+        if let Some(index) = index {
+            indexes.push((index, value));
+        }
+
+        let index = line.rfind(key);
         if let Some(index) = index {
             indexes.push((index, value));
         }

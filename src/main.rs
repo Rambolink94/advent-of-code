@@ -7,5 +7,5 @@ pub mod year_2023;
 fn main() {
     let input_handler = InputHandler::new();
 
-    day_1::part_2(&input_handler, Mode::Fake);
+    day_1::part_2(&input_handler, Mode::Real);
 }
